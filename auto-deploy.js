@@ -7,7 +7,7 @@ const express = require('express');
 const app = express();
 app.use(bodyParser.raw({ type: '*/*' }));
 
-export function run(command, ...args) {
+function run(command, ...args) {
   const child = spawn(command, args);
 
   const stdout = [];
@@ -46,14 +46,15 @@ app.post('/api', checkSignature, async (req, res) => {
   let body = JSON.parse(req.body);
   console.log('web hook received: ' + req.headers['x-github-event']);
 
-  console.log(req.headers);
-  console.log(body);
-
   if (req.headers['x-github-event'] === 'push') {
     const branch = body.ref.split('/').pop();
-    console.log('branch: ' + branch);
-    if (branch === process.env.BRANCH) {
+    const repo = body.repository.name;
+    console.log('repo:' + repo + ' branch: ' + branch);
+
+    if (repo === 'totem-time-api' && branch === process.env.BRANCH_API) {
       call(process.env.DEPLOY_API_SCRIPT);
+    } else if (repo === 'totem-time-webapp' && branch === process.env.BRANCH_WEBAPP) {
+      call(process.env.DEPLOY_WEBAPP_SCRIPT);
     }
   }
 
